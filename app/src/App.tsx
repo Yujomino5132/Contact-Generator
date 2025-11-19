@@ -1,125 +1,321 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+
+interface Contact {
+	name?: string;
+	email?: string;
+	phone?: string;
+	address?:
+		| {
+				street: string;
+				city: string;
+				state: string;
+				zipCode: string;
+				country: string;
+		  }
+		| string;
+}
 
 function App() {
-	const [contact, setContact] = useState('Loading...');
-	const [copyIcon, setCopyIcon] = useState('📋');
+	const [contact, setContact] = useState<Contact | null>(null);
+	const [copyStates, setCopyStates] = useState<{ [key: string]: string }>({});
 	const [includeEmail, setIncludeEmail] = useState(true);
 	const [includePhone, setIncludePhone] = useState(true);
-	const [includeAddress, setIncludeAddress] = useState(false);
+	const [includeAddress, setIncludeAddress] = useState(true);
 
-	const fetchContact = async () => {
+	const fetchContact = useCallback(async () => {
 		try {
-			const backendUrl = import.meta.env.VITE_OPTIONAL_BACKEND_URL || '';
-			const baseUrl = backendUrl ? backendUrl : '';
 			const params = new URLSearchParams({
 				includeEmail: includeEmail.toString(),
 				includePhone: includePhone.toString(),
 				includeAddress: includeAddress.toString(),
 			});
 
-			const response = await fetch(`${baseUrl}/api/contact?${params}`);
+			const response = await fetch(`/api/contact?${params}`);
 			const data = await response.json();
-			setContact(JSON.stringify(data, null, 2) || 'Error fetching contact');
+			setContact(data);
 		} catch (error) {
 			console.error('Error fetching contact:', error);
-			setContact('Error fetching contact');
+			setContact({ name: 'Error loading contact' });
 		}
-	};
+	}, [includeEmail, includePhone, includeAddress]);
 
 	useEffect(() => {
 		fetchContact();
-	}, []);
+	}, [fetchContact]);
 
-	const copyToClipboard = (text: string) => {
-		navigator.clipboard
-			.writeText(text)
-			.then(() => {
-				setCopyIcon('✔');
-				setTimeout(() => setCopyIcon('📋'), 2000);
-			})
-			.catch((err) => {
-				console.error('Failed to copy contact:', err);
-			});
+	const copyToClipboard = (text: string, field: string) => {
+		navigator.clipboard.writeText(text).then(() => {
+			setCopyStates((prev) => ({ ...prev, [field]: '✔' }));
+			setTimeout(() => {
+				setCopyStates((prev) => ({ ...prev, [field]: '📋' }));
+			}, 2000);
+		});
+	};
+
+	const formatAddress = (address: Contact['address']) => {
+		if (typeof address === 'string') return address;
+		if (!address) return '';
+		return `${address.street}, ${address.city}, ${address.state} ${address.zipCode}, ${address.country}`;
 	};
 
 	return (
-		<div className="flex flex-col items-center p-5 min-h-screen bg-gray-50">
-			<div className="w-full max-w-md p-6 bg-white border border-gray-300 rounded-lg shadow-sm">
-				<h2 className="text-2xl font-bold text-center mb-6">
+		<div
+			style={{
+				padding: '20px',
+				backgroundColor: '#f9fafb',
+				minHeight: '100vh',
+				display: 'flex',
+				flexDirection: 'column',
+				alignItems: 'center',
+			}}
+		>
+			<div
+				style={{
+					width: '100%',
+					maxWidth: '400px',
+					padding: '24px',
+					backgroundColor: 'white',
+					border: '1px solid #d1d5db',
+					borderRadius: '8px',
+					boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+				}}
+			>
+				<h2
+					style={{
+						fontSize: '24px',
+						fontWeight: 'bold',
+						textAlign: 'center',
+						marginBottom: '24px',
+					}}
+				>
 					Contact Generator
 				</h2>
 
-				<div className="mb-6">
-					<label className="block mb-2 font-semibold text-gray-700">
+				<div style={{ marginBottom: '24px' }}>
+					<label
+						style={{
+							display: 'block',
+							marginBottom: '8px',
+							fontWeight: '600',
+							color: '#374151',
+						}}
+					>
 						Generated Contact:
 					</label>
-					<div className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100 font-mono text-xs break-all flex items-start justify-between">
-						<pre className="flex-grow whitespace-pre-wrap">{contact}</pre>
-						<button
-							onClick={() => copyToClipboard(contact)}
-							className="ml-3 text-2xl hover:bg-gray-200 p-1 rounded flex-shrink-0"
+					{contact ? (
+						<div>
+							{contact.name && (
+								<div
+									style={{
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'space-between',
+										padding: '8px 12px',
+										border: '1px solid #d1d5db',
+										borderRadius: '6px',
+										backgroundColor: '#f3f4f6',
+										marginBottom: '8px',
+									}}
+								>
+									<span>
+										<strong>Name:</strong> {contact.name}
+									</span>
+									<button
+										onClick={() => copyToClipboard(contact.name!, 'name')}
+										style={{
+											fontSize: '16px',
+											padding: '4px',
+											borderRadius: '4px',
+											border: 'none',
+											backgroundColor: 'transparent',
+											cursor: 'pointer',
+										}}
+									>
+										{copyStates.name || '📋'}
+									</button>
+								</div>
+							)}
+							{contact.email && (
+								<div
+									style={{
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'space-between',
+										padding: '8px 12px',
+										border: '1px solid #d1d5db',
+										borderRadius: '6px',
+										backgroundColor: '#f3f4f6',
+										marginBottom: '8px',
+									}}
+								>
+									<span>
+										<strong>Email:</strong> {contact.email}
+									</span>
+									<button
+										onClick={() => copyToClipboard(contact.email!, 'email')}
+										style={{
+											fontSize: '16px',
+											padding: '4px',
+											borderRadius: '4px',
+											border: 'none',
+											backgroundColor: 'transparent',
+											cursor: 'pointer',
+										}}
+									>
+										{copyStates.email || '📋'}
+									</button>
+								</div>
+							)}
+							{contact.phone && (
+								<div
+									style={{
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'space-between',
+										padding: '8px 12px',
+										border: '1px solid #d1d5db',
+										borderRadius: '6px',
+										backgroundColor: '#f3f4f6',
+										marginBottom: '8px',
+									}}
+								>
+									<span>
+										<strong>Phone:</strong> {contact.phone}
+									</span>
+									<button
+										onClick={() => copyToClipboard(contact.phone!, 'phone')}
+										style={{
+											fontSize: '16px',
+											padding: '4px',
+											borderRadius: '4px',
+											border: 'none',
+											backgroundColor: 'transparent',
+											cursor: 'pointer',
+										}}
+									>
+										{copyStates.phone || '📋'}
+									</button>
+								</div>
+							)}
+							{contact.address && (
+								<div
+									style={{
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'space-between',
+										padding: '8px 12px',
+										border: '1px solid #d1d5db',
+										borderRadius: '6px',
+										backgroundColor: '#f3f4f6',
+									}}
+								>
+									<span>
+										<strong>Address:</strong> {formatAddress(contact.address)}
+									</span>
+									<button
+										onClick={() =>
+											copyToClipboard(formatAddress(contact.address), 'address')
+										}
+										style={{
+											fontSize: '16px',
+											padding: '4px',
+											borderRadius: '4px',
+											border: 'none',
+											backgroundColor: 'transparent',
+											cursor: 'pointer',
+										}}
+									>
+										{copyStates.address || '📋'}
+									</button>
+								</div>
+							)}
+						</div>
+					) : (
+						<div
+							style={{
+								padding: '12px',
+								border: '1px solid #d1d5db',
+								borderRadius: '6px',
+								backgroundColor: '#f3f4f6',
+							}}
 						>
-							{copyIcon}
-						</button>
-					</div>
+							Loading...
+						</div>
+					)}
 				</div>
 
 				<button
 					onClick={fetchContact}
-					className="w-full mb-6 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+					style={{
+						width: '100%',
+						marginBottom: '24px',
+						padding: '8px 16px',
+						backgroundColor: '#2563eb',
+						color: 'white',
+						borderRadius: '6px',
+						border: 'none',
+						cursor: 'pointer',
+					}}
 				>
 					Generate New Contact
 				</button>
 
-				<div className="mb-4">
-					<label className="block mb-2 font-semibold text-gray-700">
+				<div style={{ marginBottom: '16px' }}>
+					<label
+						style={{
+							display: 'block',
+							marginBottom: '8px',
+							fontWeight: '600',
+							color: '#374151',
+						}}
+					>
 						<input
 							type="checkbox"
 							checked={includeEmail}
 							onChange={(e) => setIncludeEmail(e.target.checked)}
-							className="mr-2"
+							style={{ marginRight: '8px' }}
 						/>
 						Include Email
 					</label>
 				</div>
 
-				<div className="mb-4">
-					<label className="block mb-2 font-semibold text-gray-700">
+				<div style={{ marginBottom: '16px' }}>
+					<label
+						style={{
+							display: 'block',
+							marginBottom: '8px',
+							fontWeight: '600',
+							color: '#374151',
+						}}
+					>
 						<input
 							type="checkbox"
 							checked={includePhone}
 							onChange={(e) => setIncludePhone(e.target.checked)}
-							className="mr-2"
+							style={{ marginRight: '8px' }}
 						/>
 						Include Phone
 					</label>
 				</div>
 
-				<div className="mb-4">
-					<label className="block mb-2 font-semibold text-gray-700">
+				<div style={{ marginBottom: '16px' }}>
+					<label
+						style={{
+							display: 'block',
+							marginBottom: '8px',
+							fontWeight: '600',
+							color: '#374151',
+						}}
+					>
 						<input
 							type="checkbox"
 							checked={includeAddress}
 							onChange={(e) => setIncludeAddress(e.target.checked)}
-							className="mr-2"
+							style={{ marginRight: '8px' }}
 						/>
 						Include Address
 					</label>
 				</div>
-			</div>
-
-			<div className="mt-8 text-center">
-				<p className="text-gray-600">
-					For more details on the API, please visit the{' '}
-					<a
-						href={`${import.meta.env.VITE_OPTIONAL_BACKEND_URL || ''}/docs`}
-						target="_blank"
-						className="text-blue-600 hover:underline"
-					>
-						OpenAPI documentation
-					</a>
-					.
-				</p>
 			</div>
 		</div>
 	);
