@@ -1,10 +1,14 @@
 import { fromHono } from "chanfana";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { HomePageRoute } from "./endpoints/get";
 import { GenerateContactRoute } from "./endpoints/api/get";
 
 // Start Hono app
 const app = new Hono();
+
+// Add CORS middleware
+app.use('*', cors());
 
 // Setup OpenAPI
 const openapi = fromHono(app, { docs_url: "/docs" });
