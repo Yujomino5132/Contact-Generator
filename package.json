@@ -10,13 +10,13 @@
     "cf-typegen": "wrangler types"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20251119.0",
+    "@cloudflare/workers-types": "^4.20251221.0",
     "typescript": "^5.9.3",
-    "wrangler": "^4.49.0"
+    "wrangler": "^4.56.0"
   },
   "dependencies": {
     "chanfana": "^2.8.3",
-    "hono": "^4.8.x",
-    "zod": "^4.1.12"
+    "hono": "^4.11.x",
+    "zod": "^4.2.1"
   }
 }
