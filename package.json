@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "predeploy": "npm run buildApp && npm install && npm run cf-typegen",
-		"deploy": "wrangler deploy --dry-run",
-		"postdeploy": "wrangler deploy",
+    "deploy": "wrangler deploy --dry-run",
+    "postdeploy": "wrangler deploy",
     "buildApp": "cd app && npm install && npm run release",
     "cf-typegen": "wrangler types"
   },
@@ -15,6 +15,7 @@
     "wrangler": "^4.56.0"
   },
   "dependencies": {
+    "@faker-js/faker": "^10.1.0",
     "chanfana": "^2.8.3",
     "hono": "^4.11.x",
     "zod": "^4.2.1"
